@@ -248,10 +248,12 @@ local usersString = databankSlot.getStringValue("users") or error ("key 'users' 
 local users = json.decode(usersString) or {}
 
 local user = {}
+local userKey = 0
 
-for _, playerObject in ipairs(users) do
+for key, playerObject in ipairs(users) do
 	if playerObject.id == masterPlayerId then
 		user = playerObject
+		userKey = key	
 		break
 	end
 end
@@ -261,6 +263,7 @@ if not user.id then
 	user.name = masterPlayerName
 	user.counter = 1
 	table.insert(users,user)
+	userKey = #users
 end
 
 local timeout = 3600 --export: timeout for the counter in seconds
@@ -279,7 +282,7 @@ if user.name ~= masterPlayerName then
 	user.name = masterPlayerName
 end
 
-users[masterPlayerId] = user
+users[userKey] = user
 -- record to the databank
 databankSlot.setStringValue("users",json.encode(users))
 
