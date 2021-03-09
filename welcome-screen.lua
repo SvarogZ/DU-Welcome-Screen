@@ -260,6 +260,7 @@ if not user.id then
 	user.id = masterPlayerId
 	user.name = masterPlayerName
 	user.counter = 1
+	table.insert(users,user)
 end
 
 local timeout = 3600 --export: timeout for the counter in seconds
@@ -278,7 +279,7 @@ if user.name ~= masterPlayerName then
 	user.name = masterPlayerName
 end
 
-table.insert(users,user)
+users[masterPlayerId] = user
 -- record to the databank
 databankSlot.setStringValue("users",json.encode(users))
 
