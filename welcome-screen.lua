@@ -292,13 +292,13 @@ local function dateFormat(t)
 	local t = type(t)=='number' and t>0 and t or 0
 	local text = ""
 	
-	local day = getTextNumber(math.floor(t/86400))
+	local day = math.floor(t/86400)
 	t = t%(24*3600)
-	local hour = getTextNumber(math.floor(t/3600))
+	local hour = math.floor(t/3600)
 	t = t%3600
-	local minute = getTextNumber(math.floor(t/60))
+	local minute = math.floor(t/60)
 	t = t%60
-	local second = getTextNumber(math.floor(t))
+	local second = math.floor(t)
 
 	if day > 0 then text = day.."d:" end
 	if day > 0 or hour > 0 then text = text..hour.."h:" end
@@ -359,8 +359,9 @@ if statisticScreenSlot then
 		
 		local firstLine = (currentList - 1) * 10 + 1
 		local lastLine = firstLine + numLinesToShow - 1
-		
-		for i=firstLine,lastLine,1 do
+		if lastLine > numberRecords then lastLine = numberRecords end
+
+		for i=firstLine,lastLine do
 			local playerObject = users[i]	
 			local lastVisit = ""
 			if playerObject.lastTime then
