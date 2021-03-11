@@ -288,17 +288,22 @@ databankSlot.setStringValue("users",json.encode(users))
 
 local durationString = "This is your first visit"
 
-local function dateFormat(duration)
-	local duration = duration or 0
+local function dateFormat(t)
+	local t = type(t)=='number' and t>0 and t or 0
 	local text = ""
-	local days = utils.round(duration//86400)
-	if days > 0 then text = days.."d:" end
-	duration = duration -  days *  86400
-	local hours = utils.round(duration//3600)
-	if hours > 0 or text ~= "" then text = text..hours.."h:" end
-	duration = duration -  hours *  3600
-	local minutes = utils.round(duration//60)
-	return text..minutes.."m"
+	
+	local day = getTextNumber(math.floor(t/86400))
+	t = t%(24*3600)
+	local hour = getTextNumber(math.floor(t/3600))
+	t = t%3600
+	local minute = getTextNumber(math.floor(t/60))
+	t = t%60
+	local second = getTextNumber(math.floor(t))
+
+	if day > 0 then text = day.."d:" end
+	if day > 0 or hour > 0 then text = text..hour.."h:" end
+
+	return text..minute.."m"
 end
 
 if previousVisit then
@@ -352,34 +357,32 @@ if statisticScreenSlot then
 	<th>Visits</th>
 	</tr>]])
 		
-		local firstLine = (currentList - 1) * 10
-		local lastLine = firstLine + numLinesToShow
+		local firstLine = (currentList - 1) * 10 + 1
+		local lastLine = firstLine + numLinesToShow - 1
 		
-		local counter = 0
-		for _, playerObject in ipairs(users) do	
-			counter = counter + 1
-			if counter > firstLine then
-				if counter > firstLine + numLinesToShow then break end
-				local lastVisit = ""
-				if playerObject.lastTime then
-					lastVisit = dateFormat(visitTime - playerObject.lastTime)
-				end
-				local lineColor1 = "#525252" --export: Statistic screen: odd line color #839192
-				local lineColor2 = "#3B3B3B" --export: Statistic screen: even line color #717D7E
-				local backgroundColor = lineColor1
-				if counter%2 < 0.1 then
-					backgroundColor = lineColor2
-				end
-				
-				table.insert(htmlStaticticTable,[[<tr style="background-color:]]..backgroundColor..[[;">
-	<td>]]..counter..[[</td>
-	<td>]]..playerObject.id..[[</td>
-	<td>]]..playerObject.name..[[</td>
-	<td>]]..dateFormat(visitTime - playerObject.time)..[[</td>
-	<td>]]..lastVisit..[[</td>
-	<td>]]..playerObject.counter..[[</td>
-	</tr>]])
+		for i=firstLine,lastLine,1 do
+			local playerObject = users[i]	
+			local lastVisit = ""
+			if playerObject.lastTime then
+				lastVisit = dateFormat(visitTime - playerObject.lastTime)
 			end
+			local lineColor1 = "#525252" --export: Statistic screen: odd line color #839192
+			local lineColor2 = "#3B3B3B" --export: Statistic screen: even line color #717D7E
+			local backgroundColor = lineColor1
+			if i%2 < 0.1 then
+				backgroundColor = lineColor2
+			end
+			
+			table.insert(htmlStaticticTable,[[
+	<tr style="background-color:]]..backgroundColor..[[;">
+		<td>]]..i..[[</td>
+		<td>]]..playerObject.id..[[</td>
+		<td>]]..playerObject.name..[[</td>
+		<td>]]..dateFormat(visitTime - playerObject.time)..[[</td>
+		<td>]]..lastVisit..[[</td>
+		<td>]]..playerObject.counter..[[</td>
+	</tr>
+]])
 		end
 		
 		if not statisticTableId then
