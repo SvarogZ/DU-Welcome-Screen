@@ -224,28 +224,50 @@ end
 
 initiateSlots()
 
-local welcomeScreenSlot = screens[1]
-welcomeScreenSlot.clear()
+local showWelcomeScreen = true --export: select to show the welcome screen
+local showStatisticScreen = true --export: select to show the staictic screen
 
+local welcomeScreenSlot = screens[1]
 local statisticScreenSlot = screens[2]
-if not statisticScreenSlot then
-	system.print("Statistic screen (second) is not connected")
+
+if showWelcomeScreen then
+	welcomeScreenSlot.clear()
 else
-	statisticScreenSlot.clear()
+	statisticScreenSlot = screens[1]
+	welcomeScreenSlot = nil
+end
+
+if showStatisticScreen then
+	if not statisticScreenSlot then
+		system.print("Statistic screen (second) is not connected")
+	else
+		statisticScreenSlot.clear()
+	end
+else
+	showStatisticScreen = nil
 end
 
 local databankSlot = databanks[1]
---databankSlot.clear()
+local clearDatabank = false --export: select to clear the databank when programming board started
+if clearDatabank then
+	databankSlot.clear()
+end
 
 -------------------------------
----- WELCOME SCREEN -----------
+---- READ FROM DATABANK -------
+-------------------------------
+local usersString = databankSlot.getStringValue("users")
+local users = {}
+if usersString and usersString ~= "" then
+	users = json.decode(usersString) or {}
+end
+
+-------------------------------
+---- IDENTIFY AND COUNT USER --
 -------------------------------
 local masterPlayerId = unit.getMasterPlayerId()
 local masterPlayerName = system.getPlayerName(masterPlayerId)
 local visitTime = system.getTime()
-
-local usersString = databankSlot.getStringValue("users") or error ("key 'users' is not found in the databank")
-local users = json.decode(usersString) or {}
 
 local user = {}
 local userKey = 0
@@ -286,46 +308,54 @@ users[userKey] = user
 -- record to the databank
 databankSlot.setStringValue("users",json.encode(users))
 
-local durationString = "This is your first visit"
+-------------------------------
+---- FUNCTIONS ----------------
+-------------------------------
+	local function dateFormat(t)
+		local t = type(t)=='number' and t>0 and t or 0
+		local text = ""
+		
+		local day = math.floor(t/86400)
+		t = t%(24*3600)
+		local hour = math.floor(t/3600)
+		t = t%3600
+		local minute = math.floor(t/60)
+		t = t%60
+		local second = math.floor(t)
 
-local function dateFormat(t)
-	local t = type(t)=='number' and t>0 and t or 0
-	local text = ""
-	
-	local day = math.floor(t/86400)
-	t = t%(24*3600)
-	local hour = math.floor(t/3600)
-	t = t%3600
-	local minute = math.floor(t/60)
-	t = t%60
-	local second = math.floor(t)
+		if day > 0 then text = day.."d:" end
+		if day > 0 or hour > 0 then text = text..hour.."h:" end
 
-	if day > 0 then text = day.."d:" end
-	if day > 0 or hour > 0 then text = text..hour.."h:" end
+		return text..minute.."m"
+	end
 
-	return text..minute.."m"
+-------------------------------
+---- WELCOME SCREEN -----------
+-------------------------------
+if welcomeScreenSlot then
+	local durationString = "This is your first visit"
+
+	if previousVisit then
+		durationString = "You visited us "..dateFormat(visitTime - previousVisit).." ago"
+	end
+
+	local welcomeColor = "#ffffff" --export: Welcome screen: "Welcome" color
+	local nameColor = "#ffffff" --export: Welcome screen: masterPlayerName color
+	local infoColor = "#ffffff" --export: Welcome screen: Info text color
+
+	local htmlWelcomScreen = [[<table style="height: 100%;width: 100%;text-align: center;">
+		<tr><td style="color: ]]..welcomeColor..[[;font-size: 20vh;">Welcome</td></tr>
+		<tr><td style="color: ]]..nameColor..[[;font-size: 30vh;">]]..masterPlayerName..[[</td></tr>
+		<tr><td style="color: ]]..infoColor..[[;font-size: 10vh;">]]..durationString..[[</td></tr>
+	</table>]]
+
+	welcomeScreenSlot.setHTML(htmlWelcomScreen)
 end
-
-if previousVisit then
-	durationString = "You visited us "..dateFormat(visitTime - previousVisit).." ago"
-end
-
-local welcomeColor = "#ffffff" --export: Welcome screen: "Welcome" color
-local nameColor = "#ffffff" --export: Welcome screen: masterPlayerName color
-local infoColor = "#ffffff" --export: Welcome screen: Info text color
-
-local htmlWelcomScreen = [[<table style="height: 100%;width: 100%;text-align: center;">
-	<tr><td style="color: ]]..welcomeColor..[[;font-size: 20vh;">Welcome</td></tr>
-	<tr><td style="color: ]]..nameColor..[[;font-size: 30vh;">]]..masterPlayerName..[[</td></tr>
-	<tr><td style="color: ]]..infoColor..[[;font-size: 10vh;">]]..durationString..[[</td></tr>
-</table>]]
-
-welcomeScreenSlot.setHTML(htmlWelcomScreen)
 
 -------------------------------
 ---- STATISTIC SCREEN ---------
 -------------------------------
-buttonPanel = {} -- forward declaration
+local buttonPanel = {} -- forward declaration
 
 if statisticScreenSlot then
 
@@ -457,29 +487,33 @@ if statisticScreenSlot then
 	buttonPanel[1]:press()
 end
 
+function mouseClickEvent(x,y)
+	local xs = x*100
+	local ys = y*100
+	--system.print("Function x="..xs .." y="..ys)
+	--check clickable zone
+	if xs > 5 and ys > 90 and xs < 95 then
+		-- perform button command
+		for _,button in pairs(buttonPanel) do
+			button:update(xs,ys)
+		end
+		
+		-- update visual status for all buttons
+		for _,button in pairs(buttonPanel) do
+			local callBackId = button:getCallBackId()
+			if type(callBackId) == 'number' and callBackId == currentList then
+				button:press()
+			else
+				button:release()
+			end
+		end
+	end
+end
 
 -------------------------------
 ---- SCREEN EVENT -------------
 -------------------------------
 --mouseDown(*,*) event --------
 -------------------------------
-local xs = x*100
-local ys = y*100
-
---check clickable zone
-if xs > 5 and ys > 90 and xs < 95 then
-	-- perform button command
-	for _,button in pairs(buttonPanel) do
-		button:update(xs,ys)
-	end
-	
-	-- update visual status for all buttons
-	for _,button in pairs(buttonPanel) do
-		local callBackId = button:getCallBackId()
-		if type(callBackId) == 'number' and callBackId == currentList then
-			button:press()
-		else
-			button:release()
-		end
-	end
-end
+mouseClickEvent(x,y)
+system.print("Screen-i x="..x*100 .." y="..y*100)
