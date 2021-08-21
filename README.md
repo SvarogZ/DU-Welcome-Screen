@@ -7,6 +7,12 @@ Connect a zone detector or relay linking all zone detectors to start the program
 The first screen is used as a welcome screen.
 The second screen shows statistic.
 
+Copy welcome-screen.json content to the clipboard.
+Pase lua configuration from clipboard to the programming board.
+*Note:* both connected screens are clickable. Delete mouseDown event from the "Welcome" screen.
+
+**OR**
+
 Copy-paste the code to the **unit.start**.
 Cut the code starting from
 ```
