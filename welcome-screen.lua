@@ -309,11 +309,8 @@ users[userKey] = user
 databankSlot.setStringValue("users",json.encode(users))
 
 -------------------------------
----- WELCOME SCREEN -----------
+---- FUNCTIONS ----------------
 -------------------------------
-if welcomeScreenSlot then
-	local durationString = "This is your first visit"
-
 	local function dateFormat(t)
 		local t = type(t)=='number' and t>0 and t or 0
 		local text = ""
@@ -331,6 +328,12 @@ if welcomeScreenSlot then
 
 		return text..minute.."m"
 	end
+
+-------------------------------
+---- WELCOME SCREEN -----------
+-------------------------------
+if welcomeScreenSlot then
+	local durationString = "This is your first visit"
 
 	if previousVisit then
 		durationString = "You visited us "..dateFormat(visitTime - previousVisit).." ago"
@@ -487,7 +490,7 @@ end
 function mouseClickEvent(x,y)
 	local xs = x*100
 	local ys = y*100
-
+	--system.print("Function x="..xs .." y="..ys)
 	--check clickable zone
 	if xs > 5 and ys > 90 and xs < 95 then
 		-- perform button command
@@ -507,10 +510,10 @@ function mouseClickEvent(x,y)
 	end
 end
 
-
 -------------------------------
 ---- SCREEN EVENT -------------
 -------------------------------
 --mouseDown(*,*) event --------
 -------------------------------
 mouseClickEvent(x,y)
+system.print("Screen-i x="..x*100 .." y="..y*100)
