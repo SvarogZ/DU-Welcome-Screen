@@ -253,14 +253,6 @@ if clearDatabank then
 	databankSlot.clear()
 end
 
--------------------------------
----- READ FROM DATABANK -------
--------------------------------
-local usersString = databankSlot.getStringValue("users")
-local users = {}
-if usersString and usersString ~= "" then
-	users = json.decode(usersString) or {}
-end
 
 -------------------------------
 ---- IDENTIFY AND COUNT USER --
@@ -270,22 +262,13 @@ local masterPlayerName = system.getPlayerName(masterPlayerId)
 local visitTime = system.getTime()
 
 local user = {}
-local userKey = 0
 
-for key, playerObject in ipairs(users) do
-	if playerObject.id == masterPlayerId then
-		user = playerObject
-		userKey = key	
-		break
-	end
-end
-
-if not user.id then
-	user.id = masterPlayerId
+local userString = databankSlot.getStringValue(masterPlayerId)
+if userString and usersString ~= "" then
+	user = json.decode(userString)
+else
 	user.name = masterPlayerName
 	user.counter = 1
-	table.insert(users,user)
-	userKey = #users
 end
 
 local timeout = 3600 --export: timeout for the counter in seconds
@@ -304,30 +287,29 @@ if user.name ~= masterPlayerName then
 	user.name = masterPlayerName
 end
 
-users[userKey] = user
 -- record to the databank
-databankSlot.setStringValue("users",json.encode(users))
+databankSlot.setStringValue(masterPlayerId,json.encode(user))
 
 -------------------------------
 ---- FUNCTIONS ----------------
 -------------------------------
-	local function dateFormat(t)
-		local t = type(t)=='number' and t>0 and t or 0
-		local text = ""
-		
-		local day = math.floor(t/86400)
-		t = t%(24*3600)
-		local hour = math.floor(t/3600)
-		t = t%3600
-		local minute = math.floor(t/60)
-		t = t%60
-		local second = math.floor(t)
+local function dateFormat(t)
+	local t = type(t)=='number' and t>0 and t or 0
+	local text = ""
+	
+	local day = math.floor(t/86400)
+	t = t%(24*3600)
+	local hour = math.floor(t/3600)
+	t = t%3600
+	local minute = math.floor(t/60)
+	t = t%60
+	local second = math.floor(t)
 
-		if day > 0 then text = day.."d:" end
-		if day > 0 or hour > 0 then text = text..hour.."h:" end
+	if day > 0 then text = day.."d:" end
+	if day > 0 or hour > 0 then text = text..hour.."h:" end
 
-		return text..minute.."m"
-	end
+	return text..minute.."m"
+end
 
 -------------------------------
 ---- WELCOME SCREEN -----------
@@ -350,6 +332,27 @@ if welcomeScreenSlot then
 	</table>]]
 
 	welcomeScreenSlot.setHTML(htmlWelcomScreen)
+end
+
+
+-------------------------------
+---- READ FROM DATABANK -------
+-------------------------------
+local keyListString = databankSlot.getKeys()
+local keyList = {}
+if keyListString and keyListString ~= ""then
+	keyList = json.decode(keyListString)
+end
+
+local users = {}
+
+for _, id in ipairs(keyList) do
+	local userObjectString = databankSlot.getStringValue(id)
+	if userObjectString and userObjectString ~= "" then
+		local userObject = json.decode(userObjectString)
+		userObject.id = id
+		table.insert(users,userObject)
+	end
 end
 
 -------------------------------
