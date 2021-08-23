@@ -264,7 +264,7 @@ local visitTime = system.getTime()
 local user = {}
 
 local userString = databankSlot.getStringValue(masterPlayerId)
-if userString and usersString ~= "" then
+if userString and userString ~= "" then
 	user = json.decode(userString)
 else
 	user.name = masterPlayerName
