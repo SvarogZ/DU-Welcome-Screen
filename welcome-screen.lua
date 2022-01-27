@@ -5,7 +5,7 @@
 --
 
 unit.hide()
-
+system.print("Started")
 -------------------------------
 ---- BUTTON CLASS -------------
 -------------------------------
@@ -390,7 +390,7 @@ if statisticScreenSlot then
 	<th>Visits</th>
 	</tr>]])
 		
-		local firstLine = (currentList - 1) * 10 + 1
+		local firstLine = (currentList - 1) * numLinesToShow + 1
 		local lastLine = firstLine + numLinesToShow - 1
 		if lastLine > numberRecords then lastLine = numberRecords end
 
@@ -475,7 +475,7 @@ if statisticScreenSlot then
 	buttonPanel["prev."] = ButtonClass:new(statisticScreenSlot,5,90,15,100,callButton,"prev.","prev.",buttonStyleOutset,buttonStyleOutset)
 	buttonPanel["prev."]:draw()
 
-	local numberOfButtons = numberRecords//numLinesToShow + 1
+	local numberOfButtons = (numberRecords -1)//numLinesToShow + 1
 	if numberOfButtons > 7 then numberOfButtons = 7 end
 	local buttonwidth = 70 / 7
 
@@ -512,6 +512,8 @@ function mouseClickEvent(x,y)
 		end
 	end
 end
+
+
 
 -------------------------------
 ---- SCREEN EVENT -------------
