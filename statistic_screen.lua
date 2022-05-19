@@ -1,16 +1,16 @@
 local screenWidth, screenHeight = getResolution()
 
 local tableLayer = createLayer()
-local buttonLayer = createLayer()
+local controlLayer = createLayer()
 
 
 local navigationButtonFontName = "FiraMono"
 local navigationButtonFontSize = screenHeight / 30
 local navigationButtonFont = loadFont (navigationButtonFontName, navigationButtonFontSize)
 
-if not buttons then		
+if not control then		
 	local ButtonClass = {}
-	function ButtonClass:new(layer,locationX,locationY,switchMode,checkArea,drawPressedButton,drawReleasedButtom)
+	function ButtonClass:new(layer,locationX,locationY,switchMode,checkArea,drawPressedButton,drawReleasedButton)
 		
 		local privateObj = {
 			layer = layer,
@@ -19,15 +19,15 @@ if not buttons then
 			switchMode = switchMode or false,
 			checkArea = checkArea,
 			drawPressedButton = drawPressedButton,
-			drawReleasedButtom = drawReleasedButtom or drawPressedButton,
+			drawReleasedButton = drawReleasedButton or drawPressedButton,
 			--down = false,
 			pressed = false
 		}
 		
 		function privateObj.setStatus()
-			local cursorX, cursorY = getCursor()
-			if privateObj.checkArea(privateObj.locationX,privateObj.locationY,cursorX,cursorY) then
-				if getCursorDown() then
+			if getCursorDown() then
+				local cursorX, cursorY = getCursor()
+				if privateObj.checkArea(privateObj.locationX,privateObj.locationY,cursorX,cursorY) then
 					if privateObj.switchMode then
 						if privateObj.pressed then
 							privateObj.pressed = false
@@ -39,6 +39,7 @@ if not buttons then
 					end
 				end
 			end
+
 			if getCursorReleased() then
 				if not privateObj.switchMode then
 					privateObj.pressed = false
@@ -53,7 +54,7 @@ if not buttons then
 			if privateObj.pressed then
 				privateObj.drawPressedButton(privateObj.layer,privateObj.locationX,privateObj.locationY)
 			else
-				privateObj.drawReleasedButtom(privateObj.layer,privateObj.locationX,privateObj.locationY)
+				privateObj.drawReleasedButton(privateObj.layer,privateObj.locationX,privateObj.locationY)
 			end
 		end
 		
@@ -70,40 +71,114 @@ if not buttons then
 		return setmetatable(publicObj, self)
 	end
 	
+	local SelectorClass = {}
+	function SelectorClass:new(layer,locations,checkArea,drawEnabledSelector,drawDisabledSelector)
+		
+		local privateObj = {
+			layer = layer,
+			locations = locations or {}
+			checkArea = checkArea,
+			drawEnabledSelector = drawEnabledSelector,
+			drawDisabledSelector = drawDisabledSelector or drawEnabledSelector,
+		}
+		
+		privateObj.status = {}
+		for i = 1,#privateObj.locations do
+			table.insert(privateObj.status,false)
+		end
+		
+		function privateObj.setSelector(n)
+			for i = 1,#privateObj.status do
+				if i == n then
+					privateObj.status[i] = true
+				else
+					privateObj.status[i] = false
+				end
+			end
+		end
+		
+		function privateObj.setStatus()
+			if not getCursorDown() then return end
+			
+			local cursorX, cursorY = getCursor()
+			
+			local activatedSelectorNumber
+			for i,location in ipairs(privateObj.locations) do
+				if privateObj.checkArea(location[1],location[2],cursorX,cursorY) then
+					activatedSelectorNumber = i
+					break
+				end
+			end
+			
+			if activatedSelectorNumber then
+				privateObj.setSelector(activatedSelectorNumber)
+			end
+		end
+			
+		local publicObj = {}
+		
+		function publicObj:update()
+			privateObj.setStatus()
+			for i,location in ipairs(privateObj.locations) do
+				if privateObj.status[i] then
+					privateObj.drawEnabledSelector(privateObj.layer,location[1],location[2])
+				else
+					privateObj.drawDisabledSelector(privateObj.layer,location[1],location[2])
+				end
+			end
+		end
+		
+		function publicObj:getSelector()
+			for i,status in ipairs(privateObj.status) do
+				if status then
+					return i
+				end
+			end
+		end
+		
+		function publicObj:setSelector(n)
+			privateObj.setSelector(n)
+		end
+
+		-- don't delete this
+		self.__index = self
+		return setmetatable(publicObj, self)
+	end
+	
 	local navigationButtonWidth = screenWidth / 2.1
 	local navigationButtonHeight = screenHeight / 25
 	local navigationBorderRadius = screenHeight / 50
 	
-	local function drawNextNavigationButtonPressed(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 0.2, 0.2, 0.2, 1)
-		addBoxRounded(buttonLayer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
-		setNextFillColor(buttonLayer, 1, 1, 1, 1)
-		setNextTextAlign(buttonLayer, 1, 2)
-		addText(buttonLayer, navigationButtonFont, "Next", x, y)
+	local function drawNextNavigationButtonPressed(layer,x,y)
+		setNextFillColor(layer, 0.2, 0.2, 0.2, 1)
+		addBoxRounded(layer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
+		setNextFillColor(layer, 1, 1, 1, 1)
+		setNextTextAlign(layer, 1, 2)
+		addText(layer, navigationButtonFont, "Next", x, y)
 	end
 	
-	local function drawNextNavigationButtonReliased(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 0.1, 0.1, 0.1, 1)
-		addBoxRounded(buttonLayer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
-		setNextFillColor(buttonLayer, 1, 1, 1, 1)
-		setNextTextAlign(buttonLayer, 1, 2)
-		addText(buttonLayer, navigationButtonFont, "Next", x, y)
+	local function drawNextNavigationButtonReliased(layer,x,y)
+		setNextFillColor(layer, 0.1, 0.1, 0.1, 1)
+		addBoxRounded(layer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
+		setNextFillColor(layer, 1, 1, 1, 1)
+		setNextTextAlign(layer, 1, 2)
+		addText(layer, navigationButtonFont, "Next", x, y)
 	end
 	
-	local function drawPreviousNavigationButtonPressed(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 0.2, 0.2, 0.2, 1)
-		addBoxRounded(buttonLayer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
-		setNextFillColor(buttonLayer, 1, 1, 1, 1)
-		setNextTextAlign(buttonLayer, 1, 2)
-		addText(buttonLayer, navigationButtonFont, "Previous", x, y)
+	local function drawPreviousNavigationButtonPressed(layer,x,y)
+		setNextFillColor(layer, 0.2, 0.2, 0.2, 1)
+		addBoxRounded(layer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
+		setNextFillColor(layer, 1, 1, 1, 1)
+		setNextTextAlign(layer, 1, 2)
+		addText(layer, navigationButtonFont, "Previous", x, y)
 	end
 	
-	local function drawPreviousNavigationButtonReliased(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 0.1, 0.1, 0.1, 1)
-		addBoxRounded(buttonLayer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
-		setNextFillColor(buttonLayer, 1, 1, 1, 1)
-		setNextTextAlign(buttonLayer, 1, 2)
-		addText(buttonLayer, navigationButtonFont, "Previous", x, y)
+	local function drawPreviousNavigationButtonReliased(layer,x,y)
+		setNextFillColor(layer, 0.1, 0.1, 0.1, 1)
+		addBoxRounded(layer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
+		setNextFillColor(layer, 1, 1, 1, 1)
+		setNextTextAlign(layer, 1, 2)
+		addText(layer, navigationButtonFont, "Previous", x, y)
 	end
 	
 	local function checkAreaNavigationButton(x,y,xc,yc)
@@ -117,21 +192,25 @@ if not buttons then
 		end
 	end
 	
-	local sortSize = screenHeight/100
+	control = {}
+	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.2, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
+	control.buttonPrevious = ButtonClass:new(controlLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
 	
-	local function drawSortOn(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 1, 1, 1, 1)
-		addTriangle (buttonLayer, x-sortSize, y-sortSize, x+sortSize, y-sortSize, x, y+sortSize)
+	local sortMarkSize = screenHeight/100
+	
+	local function drawSortOn(layer,x,y)
+		setNextFillColor(layer, 1, 1, 1, 1)
+		addTriangle (layer, x-sortMarkSize, y-sortMarkSize, x+sortMarkSize, y-sortMarkSize, x, y+sortMarkSize)
 	end
 	
-	local function drawSortOff(buttonLayer,x,y)
-		setNextFillColor(buttonLayer, 0.4, 0.4, 0.4, 1)
-		addTriangle (buttonLayer, x-sortSize, y-sortSize, x+sortSize, y-sortSize, x, y+sortSize)
+	local function drawSortOff(layer,x,y)
+		setNextFillColor(layer, 0.4, 0.4, 0.4, 1)
+		addTriangle (layer, x-sortMarkSize, y-sortMarkSize, x+sortMarkSize, y-sortMarkSize, x, y+sortMarkSize)
 	end
 	
-	local function checkAreaSortButton(x,y,xc,yc)
-		local deviationX = math.abs(xc - x) - sortSize
-		local deviationY = math.abs(yc - y) - sortSize
+	local function checkAreaSortSelector(x,y,xc,yc)
+		local deviationX = math.abs(xc - x) - sortMarkSize
+		local deviationY = math.abs(yc - y) - sortMarkSize
 		
 		if deviationX > 0 or deviationY > 0 then
 			return false
@@ -140,64 +219,30 @@ if not buttons then
 		end
 	end
 	
-	buttons = {}
-	buttons.next = ButtonClass:new(buttonLayer,screenWidth*0.2, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
-	buttons.previous = ButtonClass:new(buttonLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
-	buttons.sortId = ButtonClass:new(buttonLayer,screenWidth*0.16, screenHeight*0.07,true,checkAreaSortButton,drawSortOn,drawSortOff)
-	buttons.sortName = ButtonClass:new(buttonLayer,screenWidth*0.45, screenHeight*0.07,true,checkAreaSortButton,drawSortOn,drawSortOff)
-	buttons.sortLastVisit = ButtonClass:new(buttonLayer,screenWidth*0.65, screenHeight*0.07,true,checkAreaSortButton,drawSortOn,drawSortOff)
-	buttons.sortPreviousVisit = ButtonClass:new(buttonLayer,screenWidth*0.85, screenHeight*0.07,true,checkAreaSortButton,drawSortOn,drawSortOff)
-	buttons.sortVisits = ButtonClass:new(buttonLayer,screenWidth*0.975, screenHeight*0.07,true,checkAreaSortButton,drawSortOn,drawSortOff)
+	local locations = {
+		{screenWidth*0.16, screenHeight*0.07},
+		{screenWidth*0.45, screenHeight*0.07},
+		{screenWidth*0.65, screenHeight*0.07},
+		{screenWidth*0.85, screenHeight*0.07},
+		{screenWidth*0.975, screenHeight*0.07}
+	}
+	control.selectorSort = SelectorClass:new(controlLayer,locations,checkAreaSortSelector,drawSortOn,drawSortOff)
+	control.selectorSort.setSelector(1)
 end
 
-for _,button in pairs(buttons) do
-	button:update()
+for _,item in pairs(control) do
+	item:update()
 end
 
-if buttons.sortId.getStatus() then
-	buttons.sortName.setStatus(false)
-	buttons.sortLastVisit.setStatus(false)
-	buttons.sortPreviousVisit.setStatus(false)
-	buttons.sortVisits.setStatus(false)
-	if not counter then counter = 1 else counter = counter + 1 end
-	logMessage("sortId pressed "..counter.." times")
+if control.buttonNext.getStatus() then
+	logMessage("buttonNext pressed")
 end
 
-if buttons.sortName.getStatus() then
-	buttons.sortId.setStatus(false)
-	buttons.sortLastVisit.setStatus(false)
-	buttons.sortPreviousVisit.setStatus(false)
-	buttons.sortVisits.setStatus(false)
-	if not counter then counter = 1 else counter = counter + 1 end
-	logMessage("sortName pressed "..counter.." times")
+if control.buttonPrevious.getStatus() then
+	logMessage("buttonPrevious pressed")
 end
 
-if buttons.sortLastVisit.getStatus() then
-	buttons.sortId.setStatus(false)
-	buttons.sortName.setStatus(false)
-	buttons.sortPreviousVisit.setStatus(false)
-	buttons.sortVisits.setStatus(false)
-	if not counter then counter = 1 else counter = counter + 1 end
-	logMessage("sortLastVisit pressed "..counter.." times")
-end
-
-if buttons.sortPreviousVisit.getStatus() then
-	buttons.sortId.setStatus(false)
-	buttons.sortName.setStatus(false)
-	buttons.sortLastVisit.setStatus(false)
-	buttons.sortVisits.setStatus(false)
-	if not counter then counter = 1 else counter = counter + 1 end
-	logMessage("sortPreviousVisit pressed "..counter.." times")
-end
-
-if buttons.sortVisits.getStatus() then
-	buttons.sortId.setStatus(false)
-	buttons.sortName.setStatus(false)
-	buttons.sortLastVisit.setStatus(false)
-	buttons.sortPreviousVisit.setStatus(false)
-	if not counter then counter = 1 else counter = counter + 1 end
-	logMessage("sortVisits pressed "..counter.." times")
-end
+logMessage("sort "..control.selectorSort.getSelector().." selected")
 
 
 
@@ -383,5 +428,3 @@ local data = {	{"#","ID","Name","Last Visit","Prev. Visit","Visits"},
 				{"4","123456","New Player 4","3d:03h:16m","10d:03h:16m"}}
 
 tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, data, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
-
-
