@@ -76,10 +76,10 @@ if not control then
 		
 		local privateObj = {
 			layer = layer,
-			locations = locations or {}
+			locations = locations or {},
 			checkArea = checkArea,
 			drawEnabledSelector = drawEnabledSelector,
-			drawDisabledSelector = drawDisabledSelector or drawEnabledSelector,
+			drawDisabledSelector = drawDisabledSelector or drawEnabledSelector
 		}
 		
 		privateObj.status = {}
@@ -134,6 +134,7 @@ if not control then
 					return i
 				end
 			end
+			return 0
 		end
 		
 		function publicObj:setSelector(n)
@@ -145,7 +146,7 @@ if not control then
 		return setmetatable(publicObj, self)
 	end
 	
-	local navigationButtonWidth = screenWidth / 2.1
+	local navigationButtonWidth = screenWidth / 2.2
 	local navigationButtonHeight = screenHeight / 25
 	local navigationBorderRadius = screenHeight / 50
 	
@@ -193,7 +194,7 @@ if not control then
 	end
 	
 	control = {}
-	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.2, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
+	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.25, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
 	control.buttonPrevious = ButtonClass:new(controlLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
 	
 	local sortMarkSize = screenHeight/100
@@ -227,11 +228,11 @@ if not control then
 		{screenWidth*0.975, screenHeight*0.07}
 	}
 	control.selectorSort = SelectorClass:new(controlLayer,locations,checkAreaSortSelector,drawSortOn,drawSortOff)
-	control.selectorSort.setSelector(1)
+	control.selectorSort:setSelector(3)
 end
 
 for _,item in pairs(control) do
-	item:update()
+	item.update()
 end
 
 if control.buttonNext.getStatus() then
