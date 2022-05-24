@@ -1,3 +1,5 @@
+setOutput("welcome")
+
 local json = require "dkjson"
 local stringForm = getInput()
 local data = json.decode(stringForm)
