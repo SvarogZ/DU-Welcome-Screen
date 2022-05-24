@@ -1,3 +1,5 @@
+setOutput("statistic")
+
 local col_number = 6
 local row_number = 11
 local header = {"#","Id","Name","Visit","Prev. Visit","Visits"}
