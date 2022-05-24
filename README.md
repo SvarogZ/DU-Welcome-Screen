@@ -24,5 +24,5 @@ Cut the code starting from
 ```
 and past it to the event filter of the second screen (with the highest id number) or to both screens if you don't know which one is the second.
 
-![screenshop](welcome_screen.png)
-![screenshop](statistic_screen.png)
+![image](https://user-images.githubusercontent.com/26741332/170002659-505b7554-2bed-44f3-a193-632fa0e871bf.png)
+
