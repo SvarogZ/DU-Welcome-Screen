@@ -9,10 +9,10 @@ The second screen shows statistic.
 
 Copy-paste "welcome_screen.lua" to the first screen.
 
-Copy-paste "statictic_screen.lua" to the seocnd screen.
+Copy-paste "statictic_screen.lua" to the second screen.
 
 Copy "programming_board.conf" content to the clipboard.
-Pase lua configuration from clipboard to the programming board.
+Paste lua configuration from clipboard to the programming board.
 
 **OR**
 
