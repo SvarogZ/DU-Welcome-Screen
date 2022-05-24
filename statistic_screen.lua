@@ -1,3 +1,8 @@
+local col_number = 6
+local row_number = 11
+local header = {"#","Id","Name","Visit","Prev. Visit","Visits"}
+
+
 local screenWidth, screenHeight = getResolution()
 
 local tableLayer = createLayer()
@@ -194,8 +199,8 @@ if not control then
 	end
 	
 	control = {}
-	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.25, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
-	control.buttonPrevious = ButtonClass:new(controlLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
+	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
+	control.buttonPrevious = ButtonClass:new(controlLayer,screenWidth*0.25, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
 	
 	local sortMarkSize = screenHeight/100
 	
@@ -210,8 +215,8 @@ if not control then
 	end
 	
 	local function checkAreaSortSelector(x,y,xc,yc)
-		local deviationX = math.abs(xc - x) - sortMarkSize
-		local deviationY = math.abs(yc - y) - sortMarkSize
+		local deviationX = math.abs(xc - x) - sortMarkSize * 2
+		local deviationY = math.abs(yc - y) - sortMarkSize * 2
 		
 		if deviationX > 0 or deviationY > 0 then
 			return false
@@ -228,7 +233,12 @@ if not control then
 		{screenWidth*0.975, screenHeight*0.07}
 	}
 	control.selectorSort = SelectorClass:new(controlLayer,locations,checkAreaSortSelector,drawSortOn,drawSortOff)
-	control.selectorSort:setSelector(3)
+	selector = 3
+	dataSorted = false
+	control.selectorSort:setSelector(selector)
+	page = 1
+	pageLimit = 1
+	dataVersion = 0
 end
 
 for _,item in pairs(control) do
@@ -236,15 +246,170 @@ for _,item in pairs(control) do
 end
 
 if control.buttonNext.getStatus() then
-	logMessage("buttonNext pressed")
+	page = page + 1
+	if page > pageLimit then page = 1 end
+	--logMessage("buttonNext pressed")
 end
 
 if control.buttonPrevious.getStatus() then
-	logMessage("buttonPrevious pressed")
+	page = page - 1
+	if page < 1 then page = pageLimit end
+	--logMessage("buttonPrevious pressed")
 end
 
-logMessage("sort "..control.selectorSort.getSelector().." selected")
+if control.selectorSort.getSelector() ~= selector then
+	selector = control.selectorSort.getSelector()
+	dataSorted = false
+	--logMessage("sort "..control.selectorSort.getSelector().." selected")
+end
 
+local DataClass = {}
+function DataClass:new(startPattern,stopPattern)
+	
+	local privateObj = {
+		startPattern = startPattern or "[s]",
+		stopPattern = stopPattern or "[e]",
+		data = {},
+		finalString = "",
+		isRecordingInProcess = false,
+		isDataUpdated = true,
+		sortColumn = 1,
+		dataVersion = 0
+	}
+	
+	function privateObj:sort()
+		table.sort(privateObj.data, function (a, b) return (a[privateObj.sortColumn] < b[privateObj.sortColumn]) end)
+	end
+	
+	local publicObj = {}
+	
+	function publicObj:update(newString)
+		if not newString then return end
+	
+		if string.sub(newString,1,#privateObj.startPattern) == privateObj.startPattern then
+			privateObj.finalString = string.sub(newString,#privateObj.startPattern+1)
+			privateObj.isRecordingInProcess = true
+			--logMessage("start record")
+			--logMessage(privateObj.finalString)
+		elseif privateObj.isRecordingInProcess then
+			privateObj.finalString = privateObj.finalString .. newString
+			--logMessage("add record")
+			--logMessage(privateObj.finalString)
+		end
+		
+		if privateObj.isRecordingInProcess and string.sub(newString, -#privateObj.stopPattern) == privateObj.stopPattern then
+			privateObj.finalString = string.sub(privateObj.finalString,1,-#privateObj.stopPattern-1)
+			privateObj.isRecordingInProcess = false
+			privateObj.isDataUpdated = false
+			--logMessage("cut end")
+		end
+		
+		if not privateObj.isDataUpdated then
+			--logMessage(privateObj.finalString)
+			local json = require "dkjson"
+			privateObj.data = json.decode(privateObj.finalString)
+			privateObj:sort()
+			privateObj.isDataUpdated = true
+			privateObj.dataVersion = privateObj.dataVersion + 1
+		end
+	end
+	
+	function publicObj:sort(column)
+		if column then
+			privateObj.sortColumn = column
+			privateObj:sort()
+		end
+	end
+	
+	function publicObj:getData()
+		return privateObj.data
+	end
+	
+	function publicObj:getStatus()
+		return not privateObj.isRecordingInProcess
+	end
+	
+	function publicObj:getVersion()
+		return not privateObj.dataVersion
+	end
+	
+	-- don't delete this
+	self.__index = self
+	return setmetatable(publicObj, self)
+end
+
+if not dataFromPB then
+	dataFromPB = DataClass:new("[s]","[e]")
+end
+
+local stringForm = getInput()
+dataFromPB:update(stringForm)
+local data = dataFromPB:getData()
+pageLimit = math.floor(#data / row_number) + 1
+if not dataSorted then
+	dataFromPB:sort(selector)
+	dataSorted = true
+end
+
+local function getProcessedData(data,rowsToShow,page,header)
+	local dataSize = #data
+	local firstRow = (page -1) * rowsToShow + 1
+	if firstRow > dataSize then
+		page = page - 1
+		if page < 1 then page = 1 end
+		firstRow = (page -1) * rowsToShow + 1
+	end
+	local lastRow = page * rowsToShow
+	if lastRow > dataSize then lastRow = dataSize end
+	
+	--logMessage("rowsToShow="..rowsToShow)
+	--logMessage("page="..page)
+	--logMessage("firstRow="..firstRow)
+	--logMessage("lastRow="..lastRow)
+	
+	local processedData = {}
+	
+	if header and type(header) == "table" then
+		table.insert(processedData,header)
+	end
+	
+	local function dateFormat(t)
+		local t = type(t)=='number' and t>0 and t or 0
+		local text = ""
+		
+		local day = math.floor(t/86400)
+		t = t%(24*3600)
+		local hour = math.floor(t/3600)
+		t = t%3600
+		local minute = math.floor(t/60)
+		t = t%60
+		local second = math.floor(t)
+
+		if day > 0 then text = day.."d:" end
+		if day > 0 or hour > 0 then text = text..hour.."h:" end
+
+		return text..minute.."m"
+	end
+	
+	local k = firstRow
+	for i = firstRow, lastRow do
+		local row = {k}
+		local dataRow = data[i] or {}
+		for n,item in ipairs(dataRow) do
+			if n == 3 or n == 4 then
+				item = dateFormat(item)
+			end
+			table.insert(row,item)
+		end
+		table.insert(processedData,row)
+		k = k + 1
+	end
+	
+	return processedData
+end
+
+
+local dataPage = getProcessedData(data,row_number-1,page,header)
 
 
 local TableClass = {}
@@ -372,7 +537,7 @@ function CellClass:new(font,fontColor,backgroundColor,borderWidth,borderColor,bo
 				
 		addBoxRounded(layer, x, y, width, height, privateObj.borderRadius)
 		
-		local textLines = privateObj.getTextWrapped(privateObj.font, text, width-privateObj.borderPadding*2)
+		local textLines = privateObj.getTextWrapped(privateObj.font, tostring(text), width-privateObj.borderPadding*2)
 		local lineVerticalShift = (height)/(1+#textLines)
 		
 		local textX = x + privateObj.borderPadding + textAlign * (width - privateObj.borderPadding) / 2
@@ -389,14 +554,10 @@ function CellClass:new(font,fontColor,backgroundColor,borderWidth,borderColor,bo
 	return setmetatable(publicObj, self)
 end
 
-local headingData = { {"#","ID","Name","Visit","Pre. visit","Visits"} }
 local tableColumnWidthPattern = {5,12,30,20,20,13}
 local tableRowHeightPattern = {}
 local textAlignColumnPattern = {1}
 
-
-local col_number = 6
-local row_number = 10
 local font_name = "FiraMono"
 local font_size = screenHeight / 30
 local font_color = {1,1,1,1}
@@ -422,10 +583,5 @@ local cellOddRow = CellClass:new(font,font_color,cell_color_odd_row,cell_border_
 local cellEvenRow = CellClass:new(font,font_color,cell_color_even_row,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
 local cellHeader = CellClass:new(font,font_color,cell_color_header,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
 
-local data = {	{"#","ID","Name","Last Visit","Prev. Visit","Visits"},
-				{"1","123456","New Player 1","3d:03h:16m","10d:03h:16m"},
-				{"2","123456","New Player 2","3d:03h:16m","10d:03h:16m"},
-				{"3","123456","New Player 2","3d:03h:16m","10d:03h:16m"},
-				{"4","123456","New Player 4","3d:03h:16m","10d:03h:16m"}}
+tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, dataPage, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
 
-tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, data, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
