@@ -5,11 +5,11 @@ local stringForm = getInput()
 local data = json.decode(stringForm)
 
 local stringToShow = "Welcome"
-if data[1] then
+if data and data[1] then
 	stringToShow = stringToShow .. ", " .. data[1] .. "!"
 end
 
-if data[2] then
+if data and data[2] then
 	local function dateFormat(t)
 		local t = type(t)=='number' and t>0 and t or 0
 		local text = ""
