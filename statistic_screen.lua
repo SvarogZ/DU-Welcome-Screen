@@ -1,18 +1,40 @@
 setOutput("statistic")
+local screenWidth, screenHeight = getResolution()
 
 local col_number = 6
 local row_number = 11
 local header = {"#","Id","Name","Visit","Prev. Visit","Visits"}
-
-
-local screenWidth, screenHeight = getResolution()
+local tableColumnWidthPattern = {5,12,30,20,20,13}
+local tableRowHeightPattern = {}
+local textAlignColumnPattern = {1}
+local table_font_name = "FiraMono"
+local table_font_size = screenHeight / 30
+local table_font_color = {1,1,1,1}
+local table_color = {0,0,0,1}
+local table_border_width = screenHeight / 50
+local table_border_color = {0.5,0.5,0.5,1}
+local table_border_spacing = screenHeight / 50
+local table_border_padding = 0
+local table_border_radius = 0
+local cell_color_odd_row = {0.2,0.2,0.2,1}
+local cell_color_even_row = {0.25,0.25,0.25,1}
+local cell_color_header = {0.1,0.1,0.1,1}
+local cell_border_width = screenHeight / 400
+local cell_border_color = {0,0,0,1}
+local cell_border_spacing = 0
+local cell_border_padding = screenHeight / 100
+local cell_border_radius = 0
+local navigationButtonFontName = "FiraMono"
+local navigationButtonFontSize = screenHeight / 30
+local navigationButtonWidth = screenWidth / 2.2
+local navigationButtonHeight = screenHeight / 25
+local navigationBorderRadius = screenHeight / 50
+local sortMarkSize = screenHeight/100
+local defaultSelector = 3
 
 local tableLayer = createLayer()
 local controlLayer = createLayer()
 
-
-local navigationButtonFontName = "FiraMono"
-local navigationButtonFontSize = screenHeight / 30
 local navigationButtonFont = loadFont (navigationButtonFontName, navigationButtonFontSize)
 
 if not control then		
@@ -152,11 +174,7 @@ if not control then
 		self.__index = self
 		return setmetatable(publicObj, self)
 	end
-	
-	local navigationButtonWidth = screenWidth / 2.2
-	local navigationButtonHeight = screenHeight / 25
-	local navigationBorderRadius = screenHeight / 50
-	
+		
 	local function drawNextNavigationButtonPressed(layer,x,y)
 		setNextFillColor(layer, 0.2, 0.2, 0.2, 1)
 		addBoxRounded(layer, x-navigationButtonWidth/2, y-navigationButtonHeight/2, navigationButtonWidth, navigationButtonHeight, navigationBorderRadius)
@@ -204,8 +222,6 @@ if not control then
 	control.buttonNext = ButtonClass:new(controlLayer,screenWidth*0.75, screenHeight*0.975,false,checkAreaNavigationButton,drawNextNavigationButtonPressed,drawNextNavigationButtonReliased)
 	control.buttonPrevious = ButtonClass:new(controlLayer,screenWidth*0.25, screenHeight*0.975,false,checkAreaNavigationButton,drawPreviousNavigationButtonPressed,drawPreviousNavigationButtonReliased)
 	
-	local sortMarkSize = screenHeight/100
-	
 	local function drawSortOn(layer,x,y)
 		setNextFillColor(layer, 1, 1, 1, 1)
 		addTriangle (layer, x-sortMarkSize, y-sortMarkSize, x+sortMarkSize, y-sortMarkSize, x, y+sortMarkSize)
@@ -217,8 +233,8 @@ if not control then
 	end
 	
 	local function checkAreaSortSelector(x,y,xc,yc)
-		local deviationX = math.abs(xc - x) - sortMarkSize * 2
-		local deviationY = math.abs(yc - y) - sortMarkSize * 2
+		local deviationX = math.abs(xc - x) - sortMarkSize * 3
+		local deviationY = math.abs(yc - y) - sortMarkSize * 3
 		
 		if deviationX > 0 or deviationY > 0 then
 			return false
@@ -235,12 +251,12 @@ if not control then
 		{screenWidth*0.975, screenHeight*0.07}
 	}
 	control.selectorSort = SelectorClass:new(controlLayer,locations,checkAreaSortSelector,drawSortOn,drawSortOff)
-	selector = 3
 	dataSorted = false
+	selector = defaultSelector
 	control.selectorSort:setSelector(selector)
 	page = 1
 	pageLimit = 1
-	dataVersion = 0
+	--dataVersion = 0
 end
 
 for _,item in pairs(control) do
@@ -264,6 +280,7 @@ if control.selectorSort.getSelector() ~= selector then
 	dataSorted = false
 	--logMessage("sort "..control.selectorSort.getSelector().." selected")
 end
+
 
 local DataClass = {}
 function DataClass:new(startPattern,stopPattern)
@@ -410,7 +427,6 @@ local function getProcessedData(data,rowsToShow,page,header)
 	return processedData
 end
 
-
 local dataPage = getProcessedData(data,row_number-1,page,header)
 
 
@@ -556,34 +572,12 @@ function CellClass:new(font,fontColor,backgroundColor,borderWidth,borderColor,bo
 	return setmetatable(publicObj, self)
 end
 
-local tableColumnWidthPattern = {5,12,30,20,20,13}
-local tableRowHeightPattern = {}
-local textAlignColumnPattern = {1}
-
-local font_name = "FiraMono"
-local font_size = screenHeight / 30
-local font_color = {1,1,1,1}
-local table_color = {0,0,0,1}
-local table_border_width = screenHeight / 50
-local table_border_color = {0.5,0.5,0.5,1}
-local table_border_spacing = screenHeight / 50
-local table_border_padding = 0
-local table_border_radius = 0
-local cell_color_odd_row = {0.2,0.2,0.2,1}
-local cell_color_even_row = {0.25,0.25,0.25,1}
-local cell_color_header = {0.1,0.1,0.1,1}
-local cell_border_width = screenHeight / 400
-local cell_border_color = {0,0,0,1}
-local cell_border_spacing = 0
-local cell_border_padding = screenHeight / 100
-local cell_border_radius = 0
-
-local font = loadFont (font_name, font_size)
+local font = loadFont (table_font_name, table_font_size)
 
 local tableT = TableClass:new(table_color,table_border_width,table_border_color,table_border_spacing,table_border_padding,table_border_radius)
-local cellOddRow = CellClass:new(font,font_color,cell_color_odd_row,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
-local cellEvenRow = CellClass:new(font,font_color,cell_color_even_row,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
-local cellHeader = CellClass:new(font,font_color,cell_color_header,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
+local cellOddRow = CellClass:new(font,table_font_color,cell_color_odd_row,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
+local cellEvenRow = CellClass:new(font,table_font_color,cell_color_even_row,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
+local cellHeader = CellClass:new(font,table_font_color,cell_color_header,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
 
 tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, dataPage, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
 
