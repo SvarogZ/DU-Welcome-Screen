@@ -1,12 +1,12 @@
 -------------------------------
 ---- CUSTOM VARIABLES ---------
 -------------------------------
-local stringMax = 1024 --export: max string lengh to transmite in one cycle
+local timeout = 3600 --export: timeout for the counter in seconds
+local update_time = 0.1 --export: cycle for the package of data
 local startPattern = "[s]" --export: pattern to indicate the start of the package
 local stopPattern = "[e]" --export: pattern to indicate the end of the package
-local update_time = 0.1 --export: cycle for the package of data
-local timeout = 3600 --export: timeout for the counter in seconds
 local clearDatabank = false --export: select to clear the databank when programming board started
+local stringMax = 1024 --export: max string lengh to transmite in one cycle
 
 unit.hide()
 -------------------------------
@@ -32,7 +32,8 @@ local function initiateSlots()
 	end
 
 	if #screens < 1 then
-		error("No screen connected!")
+		system.print("No screen connected!")
+		--error("No screen connected!")
 	end
 	
 	table.sort(screens, function (a, b) return (a.getId() < b.getId()) end)
@@ -41,10 +42,19 @@ end
 
 initiateSlots()
 
-
 local databankSlot = databanks[1]
 if clearDatabank then
 	databankSlot.clear()
+end
+
+local welcomeScreen = {}
+local statisticScreen = {}
+for _, screen in ipairs(screens) do
+	if screen.getScriptOutput() == "welcome" then
+		table.insert(welcomeScreen,screen)
+	elseif screen.getScriptOutput() == "statistic" then
+		table.insert(statisticScreen,screen)
+	end
 end
 
 -------------------------------
@@ -84,7 +94,7 @@ databankSlot.setStringValue(masterPlayerId,json.encode(user))
 -------------------------------
 ---- SHOW ON SCREEN -----------
 -------------------------------
-if screens[1] then
+if #welcomeScreen > 0 then
 	local data = {}
 	data[1] = masterPlayerName
 
@@ -93,12 +103,15 @@ if screens[1] then
 	end
 
 	local dataString = json.encode(data)
-	screens[1].setScriptInput(dataString)
+	
+	for _, screen in ipairs(welcomeScreen) do
+		screen.setScriptInput(dataString)
+	end
 end
 
 local dataString = ""
 
-if screens[2] then
+if #statisticScreen > 0 then
 	local keyListString = databankSlot.getKeys()
 	local keyList = {}
 	if keyListString and keyListString ~= "" then
@@ -129,19 +142,29 @@ end
 
 function transmission()
 	if not isTransmissionInProgress then
-		stringToTransmit = startPattern .. dataString .. stopPattern
-		--system.print("stringToTransmit = "..stringToTransmit)
-		isTransmissionInProgress = true
+		if dataString ~= "" then
+			stringToTransmit = startPattern .. dataString .. stopPattern
+			--system.print("stringToTransmit = "..stringToTransmit)
+			isTransmissionInProgress = true
+		else
+			unit.stopTimer("transmission")
+		end
+	end
+	
+	local function sendToScreen(stringData)
+		for _, screen in ipairs(statisticScreen) do
+			screen.setScriptInput(stringData)
+		end
 	end
 	
 	if #stringToTransmit > stringMax then
-		screens[2].setScriptInput(string.sub(stringToTransmit,1,stringMax))
+		local stringPart = string.sub(stringToTransmit,1,stringMax)
+		sendToScreen(stringPart)
 		stringToTransmit = string.sub(stringToTransmit,stringMax+1)
 	else
-		screens[2].setScriptInput(stringToTransmit)
+		sendToScreen(stringToTransmit)
 		isTransmissionInProgress = false
 		unit.stopTimer("transmission")
 		system.print("transmission complete")
 	end
-
 end
