@@ -7,7 +7,11 @@ if keyListString and keyListString ~= "" then
 	keyList = json.decode(keyListString)
 end
 
+local limit = 100
+local i = 1
 for _, id in ipairs(keyList) do
+	if i > 100 then break end
+	i = i+1
 	local userObjectString = databank1.getStringValue(id)
 	if userObjectString and userObjectString ~= "" then
 		local userObject = json.decode(userObjectString)
