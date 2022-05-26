@@ -288,6 +288,8 @@ function DataClass:new(startPattern,stopPattern)
 	local privateObj = {
 		startPattern = startPattern or "[s]",
 		stopPattern = stopPattern or "[e]",
+		rowDelimiter = "CRLF",
+		cellDelimiter = ",",
 		data = {},
 		finalString = "",
 		isRecordingInProcess = false,
@@ -302,13 +304,18 @@ function DataClass:new(startPattern,stopPattern)
 	
 	function privateObj:exctruct()
 		privateObj.data = {}
-		local expr1 = string.format("([^%s]+)", "CRLF")
-		local expr2 = string.format("([^%s]+)", ",")
+		local exprRow = string.format("([^%s]+)", privateObj.rowDelimiter)
+		local exprCell = string.format("([^%s]+)", privateObj.cellDelimiter)
 		local i = 1
-		for line in privateObj.finalString:gmatch(expr1) do
+		for line in privateObj.finalString:gmatch(exprRow) do
 			local j = 1
-			for c in line:gmatch(expr2) do
-				privateObj.data[i][j] = c
+			for s in line:gmatch(exprCell) do
+				local n = tonumber(s)
+				if n then
+					privateObj.data[i][j] = n
+				else
+					privateObj.data[i][j] = s
+				end
 				j = j + 1
 			end
 			i = i + 1
