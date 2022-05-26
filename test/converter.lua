@@ -10,7 +10,7 @@ end
 local limit = 100
 local i = 1
 for _, id in ipairs(keyList) do
-	if tonumber(id) and i < 100 then
+	if tonumber(id) and i < limit then
 		local userObjectString = databank1.getStringValue(id)
 		if userObjectString and userObjectString ~= "" then
 			local userObject = json.decode(userObjectString)
