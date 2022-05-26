@@ -387,7 +387,7 @@ end
 local stringForm = getInput()
 dataFromPB:update(stringForm)
 local data = dataFromPB:getData()
-pageLimit = math.floor(#data / row_number) + 1
+pageLimit = math.floor(#data / (row_number - 1)) + 1
 if not dataSorted then
 	dataFromPB:sort(selector)
 	dataSorted = true
