@@ -60,12 +60,15 @@ end
 -------------------------------
 ---- FUNCTIONS ----------------
 -------------------------------
-local function split(s, delimiter)
-    result = {};
-    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
-        table.insert(result, match);
+function string:split(sep)
+    local sep = sep or ","
+    local result = {}
+    local i = 1
+    for c in self:gmatch(string.format("([^%s]+)", sep)) do
+        result[i] = c
+        i = i + 1
     end
-    return result;
+    return result
 end
 
 -------------------------------
@@ -79,7 +82,7 @@ local user = {}
 
 local userString = databankSlot.getStringValue(masterPlayerId)
 if userString and userString ~= "" then
-	user = split(userString,",")
+	user = userString:split(",")
 	--str:gsub(".",function(c) table.insert(t,c) end)
 else
 	user = {masterPlayerId,masterPlayerName,visitTime,visitTime,1}
@@ -127,7 +130,7 @@ if #statisticScreen > 0 then
 	for _, id in ipairs(keyList) do
 		local userObjectString = databankSlot.getStringValue(id)
 		if userObjectString and userObjectString ~= "" then
-			local userObject = split(userObjectString,",")
+			local userObject = userObjectString:split(",")
 			userObject[3] = visitTime - userObject[3]
 			userObject[4] = visitTime - userObject[4]
 			table.insert(users,table.concat(userObject,","))
