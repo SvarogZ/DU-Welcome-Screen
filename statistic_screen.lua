@@ -288,6 +288,8 @@ function DataClass:new(startPattern,stopPattern)
 	local privateObj = {
 		startPattern = startPattern or "[s]",
 		stopPattern = stopPattern or "[e]",
+		rowDelimiter = ";",
+		cellDelimiter = ",",
 		data = {},
 		finalString = "",
 		isRecordingInProcess = false,
@@ -298,6 +300,28 @@ function DataClass:new(startPattern,stopPattern)
 	
 	function privateObj:sort()
 		table.sort(privateObj.data, function (a, b) return (a[privateObj.sortColumn] < b[privateObj.sortColumn]) end)
+	end
+	
+	function privateObj:exctruct()
+		privateObj.data = {}
+		local exprRow = string.format("([^%s]+)", privateObj.rowDelimiter)
+		local exprCell = string.format("([^%s]+)", privateObj.cellDelimiter)
+		local i = 1
+		for line in privateObj.finalString:gmatch(exprRow) do
+			local j = 1
+			privateObj.data[i] = {}
+			for s in line:gmatch(exprCell) do
+				local n = tonumber(s)
+				if n then
+					privateObj.data[i][j] = n
+				else
+					privateObj.data[i][j] = s
+				end
+				j = j + 1
+			end
+			
+			i = i + 1
+		end
 	end
 	
 	local publicObj = {}
@@ -325,8 +349,7 @@ function DataClass:new(startPattern,stopPattern)
 		
 		if not privateObj.isDataUpdated then
 			--logMessage(privateObj.finalString)
-			local json = require "dkjson"
-			privateObj.data = json.decode(privateObj.finalString)
+			privateObj:exctruct()
 			privateObj:sort()
 			privateObj.isDataUpdated = true
 			privateObj.dataVersion = privateObj.dataVersion + 1
