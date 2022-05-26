@@ -30,8 +30,7 @@ local navigationButtonWidth = screenWidth / 2.2
 local navigationButtonHeight = screenHeight / 25
 local navigationBorderRadius = screenHeight / 50
 local sortMarkSize = screenHeight/100
-selector = 3
-
+local defaultSelector = 3
 
 local tableLayer = createLayer()
 local controlLayer = createLayer()
@@ -253,6 +252,7 @@ if not control then
 	}
 	control.selectorSort = SelectorClass:new(controlLayer,locations,checkAreaSortSelector,drawSortOn,drawSortOff)
 	dataSorted = false
+	selector = defaultSelector
 	control.selectorSort:setSelector(selector)
 	page = 1
 	pageLimit = 1
@@ -300,6 +300,21 @@ function DataClass:new(startPattern,stopPattern)
 		table.sort(privateObj.data, function (a, b) return (a[privateObj.sortColumn] < b[privateObj.sortColumn]) end)
 	end
 	
+	function privateObj:exctruct()
+		privateObj.data = {}
+		local expr1 = string.format("([^%s]+)", "CRLF")
+		local expr2 = string.format("([^%s]+)", ",")
+		local i = 1
+		for line in privateObj.finalString:gmatch(expr1) do
+			local j = 1
+			for c in line:gmatch(expr2) do
+				privateObj.data[i][j] = c
+				j = j + 1
+			end
+			i = i + 1
+		end
+	end
+	
 	local publicObj = {}
 	
 	function publicObj:update(newString)
@@ -325,8 +340,7 @@ function DataClass:new(startPattern,stopPattern)
 		
 		if not privateObj.isDataUpdated then
 			--logMessage(privateObj.finalString)
-			local json = require "dkjson"
-			privateObj.data = json.decode(privateObj.finalString)
+			privateObj:exctruct()
 			privateObj:sort()
 			privateObj.isDataUpdated = true
 			privateObj.dataVersion = privateObj.dataVersion + 1
@@ -580,3 +594,4 @@ local cellEvenRow = CellClass:new(font,table_font_color,cell_color_even_row,cell
 local cellHeader = CellClass:new(font,table_font_color,cell_color_header,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
 
 tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, dataPage, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
+
