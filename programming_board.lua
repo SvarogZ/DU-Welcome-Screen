@@ -1,4 +1,4 @@
--------------------------------
+------------------------------
 ---- CUSTOM VARIABLES ---------
 -------------------------------
 local timeout = 3600 --export: timeout for the counter in seconds
@@ -58,38 +58,50 @@ for _, screen in ipairs(screens) do
 end
 
 -------------------------------
+---- FUNCTIONS ----------------
+-------------------------------
+function string:split(sep)
+    local sep = sep or ","
+    local result = {}
+    local i = 1
+    for c in self:gmatch(string.format("([^%s]+)", sep)) do
+        local n = tonumber(c)
+        if n then
+            result[i] = n
+        else
+            result[i] = c
+        end
+        i = i + 1
+    end
+    return result
+end
+
+-------------------------------
 ---- IDENTIFY AND COUNT USER --
 -------------------------------
 local masterPlayerId = unit.getMasterPlayerId()
 local masterPlayerName = system.getPlayerName(masterPlayerId)
-local visitTime = system.getArkTime()
+local visitTime = math.floor(system.getArkTime())
 
 local user = {}
 
 local userString = databankSlot.getStringValue(masterPlayerId)
 if userString and userString ~= "" then
-	user = json.decode(userString)
+	user = userString:split(",")
+	--str:gsub(".",function(c) table.insert(t,c) end)
 else
-	user.name = masterPlayerName
-	user.counter = 1
+	user = {masterPlayerId,masterPlayerName,visitTime,visitTime,1}
 end
 
-if user.time and visitTime - user.time > timeout then
-	user.lastTime = user.time
-	user.counter = user.counter + 1
+if visitTime - user[3] > timeout then
+	user[4] = user[3]
+	user[5] = user[5] + 1
 end
 
-user.time = visitTime
-local previousVisit = user.lastTime
-
-if user.name ~= masterPlayerName then
-	--name is changed since last visit
-	user.previousName = user.name
-	user.name = masterPlayerName
-end
+user[3] = visitTime
 
 -- record to the databank
-databankSlot.setStringValue(masterPlayerId,json.encode(user))
+databankSlot.setStringValue(masterPlayerId,table.concat(user,","))
 
 -------------------------------
 ---- SHOW ON SCREEN -----------
@@ -98,11 +110,11 @@ if #welcomeScreen > 0 then
 	local data = {}
 	data[1] = masterPlayerName
 
-	if previousVisit then
-		data[2] = visitTime - previousVisit
+	if user[5] > 1 then
+		data[2] = visitTime - user[4]
 	end
 
-	local dataString = json.encode(data)
+	local dataString = table.concat(data,",")
 	
 	for _, screen in ipairs(welcomeScreen) do
 		screen.setScriptInput(dataString)
@@ -123,17 +135,14 @@ if #statisticScreen > 0 then
 	for _, id in ipairs(keyList) do
 		local userObjectString = databankSlot.getStringValue(id)
 		if userObjectString and userObjectString ~= "" then
-			local userObject = json.decode(userObjectString)
-			local name = userObject.name or "Unknown"
-			local time = userObject.time or 0
-			local lastTime = userObject.lastTime or time
-			local counter = userObject.counter or 0
-			local objectToRecord = {id, name, visitTime - time, visitTime - lastTime, counter}
-			table.insert(users,objectToRecord)
+			local userObject = userObjectString:split(",")
+			userObject[3] = visitTime - userObject[3]
+			userObject[4] = visitTime - userObject[4]
+			table.insert(users,table.concat(userObject,","))
 		end
 	end
 
-	dataString = json.encode(users)
+	dataString = table.concat(users,";")
 	
 	unit.setTimer("transmission", update_time)
 end
