@@ -4,7 +4,7 @@ local databank2 = slot2
 local keyListString = databank1.getKeys()
 local keyList = {}
 if keyListString and keyListString ~= "" then
-	keyList = json.decode(keyListString)
+	keyList = keyListString:gsub([[([%[%]"])]],""):split(",")
 end
 
 local limit = 100
