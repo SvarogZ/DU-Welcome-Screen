@@ -20,21 +20,19 @@ end
 local keyListString = databank1.getKeys()
 local keyList = {}
 if keyListString and keyListString ~= "" then
-	keyList = json.decode(keyListString)
+	keyList = keyListString:gsub([[([%[%]"])]],""):split(",")
 end
 
-local limit = 100
 local i = 1
 for _, id in ipairs(keyList) do
-	if tonumber(id) and i < limit then
+	if tonumber(id) then
 		local userObjectString = databank1.getStringValue(id)
 		if userObjectString and userObjectString ~= "" then
 			local userObject = userObjectString:split(",")
 			local newObject = {}
-			newObject[1] = userObject[2]
+			newObject[1] = userObject[5]
 			newObject[2] = userObject[3]
 			newObject[3] = userObject[4]
-			newObject[4] = userObject[5]
 			local srtingToRecord = table.concat(newObject,",")
 			databank2.setStringValue(id,srtingToRecord)
 		end
