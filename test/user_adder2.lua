@@ -21,9 +21,10 @@ if not maxKey then maxKey = 100000 end
 for i=1, add do
 	local nextKey = maxKey + i
 	local newObject = {}
-	newObject[1] = 123
-	newObject[2] = 123456789
+	newObject[1] = "U"..nextKey
+	newObject[2] = 123
 	newObject[3] = 123456789
+	newObject[4] = 123456789
 	local srtingToRecord = table.concat(newObject,",")
 	databank1.setStringValue(nextKey,srtingToRecord)
 	--system.print("nextKey="..nextKey.." recorded")
