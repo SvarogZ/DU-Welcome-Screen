@@ -96,22 +96,22 @@ local function signInUser(id)
 	end
 	for _, databank in ipairs(databanks) do
 		if databank.getNbKeys() < maxUsersForDatabank then
-			return {1,visitTime}, databank
+			return {masterPlayerName,1,visitTime,visitTime}, databank
 		end
 	end
 	system.print("No space in databanks!")
-	return {1,visitTime}, nil
+	return {masterPlayerName,1,visitTime,visitTime}, nil
 end
 
 
 local user, userDatabank = signInUser(masterPlayerId)
 
-if visitTime - user[2] > timeout then
-	user[3] = user[2]
-	user[1] = user[1] + 1
+if visitTime - user[3] > timeout then
+	user[4] = user[3]
+	user[2] = user[2] + 1
 end
 
-user[2] = visitTime
+user[3] = visitTime
 
 -- record to the databank
 if userDatabank then
@@ -124,8 +124,8 @@ if #welcomeScreen > 0 then
 	local data = {}
 	data[1] = masterPlayerName
 
-	if user[1] > 1 then
-		data[2] = visitTime - user[3]
+	if user[2] > 1 then
+		data[2] = visitTime - user[4]
 	end
 
 	local dataString = table.concat(data,",")
@@ -153,19 +153,10 @@ if #statisticScreen > 0 then
 				local userObject = userObjectString:split(",")
 				local objectToRecord = {}
 				objectToRecord[1] = id
-				local name = system.getPlayerName(id)
-				if name and name ~= "" then
-					objectToRecord[2] = system.getPlayerName(id)
-				else
-                    	objectToRecord[2] = "Unknown"
-				end
-				objectToRecord[3] = visitTime - userObject[2]
-				if userObject[3] then 
-					objectToRecord[4] = visitTime - userObject[3]
-				else
-					objectToRecord[4] = objectToRecord[3]
-				end
-				objectToRecord[5] = userObject[1]
+				objectToRecord[2] = userObject[1]
+				objectToRecord[3] = visitTime - userObject[3]
+				objectToRecord[4] = visitTime - userObject[4]
+				objectToRecord[5] = userObject[2]
 				table.insert(users,table.concat(objectToRecord,","))
 			end
 		end
@@ -176,7 +167,7 @@ if #statisticScreen > 0 then
 	unit.setTimer("transmission", update_time)
 end
 
-system.print("string = "..dataString)
+--system.print("string = "..dataString)
 
 function transmission()
 	if not isTransmissionInProgress then
@@ -206,3 +197,4 @@ function transmission()
 		system.print("transmission complete")
 	end
 end
+
