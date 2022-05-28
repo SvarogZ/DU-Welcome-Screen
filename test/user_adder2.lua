@@ -8,8 +8,9 @@ local keyListString = databank1.getKeys()
 local keyList = {}
 if keyListString and keyListString ~= "" then
 	--keyList = json.decode(keyListString)
-    local replaced = keyListString:gsub('[[]', '{'):gsub('[]]', '}'):gsub('"(%w+)":', '["%1"]=')
-    keyList = load('return ' .. replaced)()
+	--local replaced = keyListString:gsub('[[]', '{'):gsub('[]]', '}'):gsub('"(%w+)":', '["%1"]=')
+	--keyList = load('return ' .. replaced)()
+	keyList = keyListString:gsub([[([%[%]"])]],""):split(",")
 end
 system.print(#keyList)
 table.sort(keyList, function(a,b) return tonumber(a) > tonumber(b) end)
