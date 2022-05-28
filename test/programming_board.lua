@@ -7,7 +7,7 @@ local startPattern = "[s]" --export: pattern to indicate the start of the packag
 local stopPattern = "[e]" --export: pattern to indicate the end of the package
 local clearDatabank = false --export: select to clear the databank when programming board started
 local stringMax = 1024 --export: max string lengh to transmite in one cycle
-local maxUsersForDatabank = 500
+local maxUsersForDatabank = 1000
 
 unit.hide()
 -------------------------------
@@ -155,7 +155,11 @@ if #statisticScreen > 0 then
 				objectToRecord[1] = id
 				objectToRecord[2] = system.getPlayerName(id)
 				objectToRecord[3] = visitTime - userObject[2]
-				objectToRecord[4] = visitTime - userObject[3]
+				if userObject[3] then 
+					objectToRecord[4] = visitTime - userObject[3]
+				else
+					userObject[3] = nil
+                    end
 				objectToRecord[5] = userObject[1]
 				table.insert(users,table.concat(objectToRecord,","))
 			end
