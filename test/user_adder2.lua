@@ -2,6 +2,21 @@ local add = 100
 local databank1 = slot1
 --databank1.clear()
 
+function string:split(sep)
+    local sep = sep or ","
+    local result = {}
+    local i = 1
+    for c in self:gmatch(string.format("([^%s]+)", sep)) do
+        local n = tonumber(c)
+        if n then
+            result[i] = n
+        else
+            result[i] = c
+        end
+        i = i + 1
+    end
+    return result
+end
 
 local keyListString = databank1.getKeys()
 --system.print(keyListString)
