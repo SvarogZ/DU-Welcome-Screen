@@ -153,13 +153,18 @@ if #statisticScreen > 0 then
 				local userObject = userObjectString:split(",")
 				local objectToRecord = {}
 				objectToRecord[1] = id
-				objectToRecord[2] = system.getPlayerName(id)
+				local name = system.getPlayerName(id)
+				if name and name ~= "" then
+					objectToRecord[2] = system.getPlayerName(id)
+				else
+                    	objectToRecord[2] = "Unknown"
+				end
 				objectToRecord[3] = visitTime - userObject[2]
 				if userObject[3] then 
 					objectToRecord[4] = visitTime - userObject[3]
 				else
-					userObject[3] = nil
-                    end
+					objectToRecord[4] = objectToRecord[3]
+				end
 				objectToRecord[5] = userObject[1]
 				table.insert(users,table.concat(objectToRecord,","))
 			end
@@ -171,7 +176,7 @@ if #statisticScreen > 0 then
 	unit.setTimer("transmission", update_time)
 end
 
---system.print("string = "..dataString)
+system.print("string = "..dataString)
 
 function transmission()
 	if not isTransmissionInProgress then
