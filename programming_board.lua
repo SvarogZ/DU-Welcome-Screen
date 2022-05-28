@@ -7,6 +7,7 @@ local startPattern = "[s]" --export: pattern to indicate the start of the packag
 local stopPattern = "[e]" --export: pattern to indicate the end of the package
 local clearDatabank = false --export: select to clear the databank when programming board started
 local stringMax = 1024 --export: max string lengh to transmite in one cycle
+local maxUsersForDatabank = 1000
 
 unit.hide()
 -------------------------------
@@ -42,9 +43,11 @@ end
 
 initiateSlots()
 
-local databankSlot = databanks[1]
+--local databankSlot = databanks[1]
 if clearDatabank then
-	databankSlot.clear()
+	for _, databank in ipairs(databanks) do
+		databank.clear()
+	end
 end
 
 local welcomeScreen = {}
@@ -83,26 +86,37 @@ local masterPlayerId = unit.getMasterPlayerId()
 local masterPlayerName = system.getPlayerName(masterPlayerId)
 local visitTime = math.floor(system.getArkTime())
 
-local user = {}
-
-local userString = databankSlot.getStringValue(masterPlayerId)
-if userString and userString ~= "" then
-	user = userString:split(",")
-	--str:gsub(".",function(c) table.insert(t,c) end)
-else
-	user = {masterPlayerId,masterPlayerName,visitTime,visitTime,1}
+local function signInUser(id)
+	for _, databank in ipairs(databanks) do
+		local userString = databank.getStringValue(id)
+		if userString and userString ~= "" then
+			local user = userString:split(",")
+			return user, databank
+		end
+	end
+	for _, databank in ipairs(databanks) do
+		if databank.getNbKeys() < maxUsersForDatabank then
+			return {masterPlayerName,1,visitTime,visitTime}, databank
+		end
+	end
+	system.print("No space in databanks!")
+	return {masterPlayerName,1,visitTime,visitTime}, nil
 end
+
+
+local user, userDatabank = signInUser(masterPlayerId)
 
 if visitTime - user[3] > timeout then
 	user[4] = user[3]
-	user[5] = user[5] + 1
+	user[2] = user[2] + 1
 end
 
 user[3] = visitTime
 
 -- record to the databank
-databankSlot.setStringValue(masterPlayerId,table.concat(user,","))
-
+if userDatabank then
+	userDatabank.setStringValue(masterPlayerId,table.concat(user,","))
+end
 -------------------------------
 ---- SHOW ON SCREEN -----------
 -------------------------------
@@ -110,7 +124,7 @@ if #welcomeScreen > 0 then
 	local data = {}
 	data[1] = masterPlayerName
 
-	if user[5] > 1 then
+	if user[2] > 1 then
 		data[2] = visitTime - user[4]
 	end
 
@@ -124,24 +138,30 @@ end
 local dataString = ""
 
 if #statisticScreen > 0 then
-	local keyListString = databankSlot.getKeys()
-	local keyList = {}
-	if keyListString and keyListString ~= "" then
-		keyList = json.decode(keyListString)
-	end
-
 	local users = {}
 
-	for _, id in ipairs(keyList) do
-		local userObjectString = databankSlot.getStringValue(id)
-		if userObjectString and userObjectString ~= "" then
-			local userObject = userObjectString:split(",")
-			userObject[3] = visitTime - userObject[3]
-			userObject[4] = visitTime - userObject[4]
-			table.insert(users,table.concat(userObject,","))
+	for i, databank in ipairs(databanks) do
+		local keyList = {}
+		local keyListString = databank.getKeys()
+		if keyListString and keyListString ~= "" then
+			keyList = keyListString:gsub([[([%[%]"])]],""):split(",")
+		end
+
+		for _, id in ipairs(keyList) do
+			local userObjectString = databank.getStringValue(id)
+			if userObjectString and userObjectString ~= "" then
+				local userObject = userObjectString:split(",")
+				local objectToRecord = {}
+				objectToRecord[1] = id
+				objectToRecord[2] = userObject[1]
+				objectToRecord[3] = visitTime - userObject[3]
+				objectToRecord[4] = visitTime - userObject[4]
+				objectToRecord[5] = userObject[2]
+				table.insert(users,table.concat(objectToRecord,","))
+			end
 		end
 	end
-
+	
 	dataString = table.concat(users,";")
 	
 	unit.setTimer("transmission", update_time)
@@ -177,3 +197,4 @@ function transmission()
 		system.print("transmission complete")
 	end
 end
+
