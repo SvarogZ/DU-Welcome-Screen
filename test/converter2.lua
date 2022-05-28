@@ -30,9 +30,10 @@ for _, id in ipairs(keyList) do
 		if userObjectString and userObjectString ~= "" then
 			local userObject = userObjectString:split(",")
 			local newObject = {}
-			newObject[1] = userObject[5]
-			newObject[2] = userObject[3]
-			newObject[3] = userObject[4]
+			newObject[1] = userObject[2]
+			newObject[2] = userObject[5]
+			newObject[3] = userObject[3]
+			newObject[4] = userObject[4]
 			local srtingToRecord = table.concat(newObject,",")
 			databank2.setStringValue(id,srtingToRecord)
 		end
