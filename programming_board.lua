@@ -7,7 +7,7 @@ local startPattern = "[s]" --export: pattern to indicate the start of the packag
 local stopPattern = "[e]" --export: pattern to indicate the end of the package
 local clearDatabank = false --export: select to clear the databank when programming board started
 local stringMax = 1024 --export: max string lengh to transmite in one cycle
-local maxUsersForDatabank = 1000
+local maxUsersForDatabank = 600
 
 unit.hide()
 -------------------------------
