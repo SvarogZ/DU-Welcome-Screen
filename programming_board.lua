@@ -144,7 +144,11 @@ if #statisticScreen > 0 then
 		local keyList = {}
 		local keyListString = databank.getKeys()
 		if keyListString and keyListString ~= "" then
-			keyList = keyListString:gsub([[([%[%]"])]],""):split(",")
+			local i = 1
+			for c in keyListString:gmatch('%d+') do
+				keyList[i] = tonumber(c)
+				i = i + 1
+			end
 		end
 
 		for _, id in ipairs(keyList) do
