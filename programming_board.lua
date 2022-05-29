@@ -2,12 +2,13 @@
 ---- CUSTOM VARIABLES ---------
 -------------------------------
 local timeout = 3600 --export: timeout for the counter in seconds
-local update_time = 0.1 --export: cycle for the package of data
+local update_time = 0.05 --export: cycle for the package of data
 local startPattern = "[s]" --export: pattern to indicate the start of the package
 local stopPattern = "[e]" --export: pattern to indicate the end of the package
 local clearDatabank = false --export: select to clear the databank when programming board started
 local stringMax = 1024 --export: max string lengh to transmite in one cycle
 local maxUsersForDatabank = 600
+local maxRecords = 2000
 
 unit.hide()
 -------------------------------
@@ -94,8 +95,11 @@ local function signInUser(id)
 			return user, databank
 		end
 	end
+	local totalRecords = 0
 	for _, databank in ipairs(databanks) do
-		if databank.getNbKeys() < maxUsersForDatabank then
+		local recordsInDatabank = databank.getNbKeys()
+		totalRecords = totalRecords + recordsInDatabank
+		if recordsInDatabank < maxUsersForDatabank and totalRecords < maxRecords then
 			return {masterPlayerName,1,visitTime,visitTime}, databank
 		end
 	end
