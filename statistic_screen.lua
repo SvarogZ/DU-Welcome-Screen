@@ -281,7 +281,7 @@ if control.selectorSort.getSelector() ~= selector then
 	--logMessage("sort "..control.selectorSort.getSelector().." selected")
 end
 
-
+logMessage("page="..page)
 local DataClass = {}
 function DataClass:new(startPattern,stopPattern)
 	
@@ -387,7 +387,7 @@ end
 local stringForm = getInput()
 dataFromPB:update(stringForm)
 local data = dataFromPB:getData()
-pageLimit = math.floor(#data / (row_number - 1)) + 1
+pageLimit = math.floor((#data - 1) / (row_number - 1)) + 1
 if not dataSorted then
 	dataFromPB:sort(selector)
 	dataSorted = true
@@ -603,4 +603,5 @@ local cellEvenRow = CellClass:new(font,table_font_color,cell_color_even_row,cell
 local cellHeader = CellClass:new(font,table_font_color,cell_color_header,cell_border_width,cell_border_color,cell_border_spacing,cell_border_padding,cell_border_radius)
 
 tableT:draw(tableLayer, 0, 0, screenWidth, screenHeight*0.95, col_number, row_number, cellHeader, cellOddRow, cellEvenRow, dataPage, tableColumnWidthPattern, textAlignColumnPattern, tableRowHeightPattern)
+
 
