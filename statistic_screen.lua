@@ -281,7 +281,8 @@ if control.selectorSort.getSelector() ~= selector then
 	--logMessage("sort "..control.selectorSort.getSelector().." selected")
 end
 
-logMessage("page="..page)
+--logMessage("page="..page)
+
 local DataClass = {}
 function DataClass:new(startPattern,stopPattern)
 	
