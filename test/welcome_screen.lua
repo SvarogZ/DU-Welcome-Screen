@@ -9,12 +9,12 @@ local border_spacing = screenHeight / 50
 local border_radius = screenHeight / 50
 local welcome_text = "Welcome, %s!"
 local welcome_font_name = "FiraMono"
-local welcome_font_size = screenHeight / 30
+local welcome_font_size = screenHeight / 10
 local welcome_font_color = {1,1,1,1}
 local first_visit_text = "This is your first visit"
 local not_first_visit_ext = "You visited us %s ago"
 local time_font_name = "FiraMono"
-local time_font_size = screenHeight / 40
+local time_font_size = screenHeight / 12
 local time_font_color = {1,1,1,1}
 
 local welcomeFont = loadFont(welcome_font_name, welcome_font_size)
@@ -54,8 +54,8 @@ local function dateFormat(t)
 	return text..minute.."m"
 end
 
-local function showWelcome{layer, name)
-	if not name then name = "stranger"
+local function showWelcome(layer, name)
+	if not name then name = "stranger" end
 	local text = string.format(welcome_text, name)
 	setNextTextAlign(layer, 1, 2)
 	addText(layer, welcomeFont, text, screenWidth/2, screenHeight/3)
