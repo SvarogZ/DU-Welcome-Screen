@@ -16,10 +16,10 @@ Paste lua configuration from clipboard to the programming board.
 
 **OR**
 
-Copy-paste the code from "programming_board.lua" to the **unit.start**.
+Copy-paste the code from "programming_board.lua" to the **unit.onStart**.
 Copy-paste
 ```transmission()```
-to **unit.tick(transmission)**
+to **unit.onTimer(transmission)**
 
 
 
