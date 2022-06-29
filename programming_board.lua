@@ -10,7 +10,7 @@ local stringMax = 1024 --export: max string lengh to transmite in one cycle
 local maxUsersForDatabank = 600
 local maxRecords = 2000
 
-unit.hide()
+unit.hideWidget()
 -------------------------------
 ---- SLOTS DETECTION ----------
 -------------------------------
@@ -19,8 +19,8 @@ local databanks = {}
 
 local function initiateSlots()
 	for _, slot in pairs(unit) do
-		if type(slot) == "table" and type(slot.export) == "table" and slot.getElementClass then
-			local elementClass = slot.getElementClass():lower()
+		if type(slot) == "table" and type(slot.export) == "table" and slot.getClass then
+			local elementClass = slot.getClass():lower()
 			if elementClass == "databankunit" then
 				table.insert(databanks,slot)
 			elseif elementClass == "screenunit" then
@@ -38,8 +38,8 @@ local function initiateSlots()
 		--error("No screen connected!")
 	end
 	
-	table.sort(screens, function (a, b) return (a.getId() < b.getId()) end)
-	table.sort(databanks, function (a, b) return (a.getId() < b.getId()) end)
+	table.sort(screens, function (a, b) return (a.getLocalId() < b.getLocalId()) end)
+	table.sort(databanks, function (a, b) return (a.getLocalId() < b.getLocalId()) end)
 end
 
 initiateSlots()
@@ -83,7 +83,7 @@ end
 -------------------------------
 ---- IDENTIFY AND COUNT USER --
 -------------------------------
-local masterPlayerId = unit.getMasterPlayerId()
+local masterPlayerId = player.getId()
 local masterPlayerName = system.getPlayerName(masterPlayerId)
 local visitTime = math.floor(system.getArkTime())
 
@@ -145,17 +145,10 @@ if #statisticScreen > 0 then
 	local users = {}
 
 	for i, databank in ipairs(databanks) do
-		local keyList = {}
-		local keyListString = databank.getKeys()
-		if keyListString and keyListString ~= "" then
-			local i = 1
-			for c in keyListString:gmatch('%d+') do
-				keyList[i] = tonumber(c)
-				i = i + 1
-			end
-		end
+		local keyList = databank.getKeyList()
 
 		for _, id in ipairs(keyList) do
+			local id = tonumber(id)
 			local userObjectString = databank.getStringValue(id)
 			if userObjectString and userObjectString ~= "" then
 				local userObject = userObjectString:split(",")
@@ -205,4 +198,3 @@ function transmission()
 		system.print("transmission complete")
 	end
 end
-
